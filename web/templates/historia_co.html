@@ -1,0 +1,56 @@
+<!-- web/templates/historia_co.html -->
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <title>Historia Clínica – {{ encounter_id }}</title>
+  <style>
+    body{font-family:system-ui,Arial, sans-serif; margin:24px;}
+    h1,h2{margin:0 0 8px}
+    .sec{margin:14px 0; padding:10px; border:1px solid #ddd; border-radius:8px;}
+    ul{margin:6px 0 0 18px}
+    .meta{color:#666; font-size:12px}
+  </style>
+</head>
+<body>
+  <h1>Historia Clínica</h1>
+  <div class="meta">Encuentro: {{ encounter_id }} — Paciente: {{ paciente.nombre }}</div>
+
+  <div class="sec">
+    <h2>1. Motivo de consulta</h2>
+    <div>{{ json.motivo_consulta or '(sin dato)' }}</div>
+  </div>
+
+  <div class="sec">
+    <h2>2. Enfermedad actual</h2>
+    <div>
+      {% if json.enfermedad_actual is string %}
+        {{ json.enfermedad_actual }}
+      {% else %}
+        {% for k,v in json.enfermedad_actual.items() %}
+          <div><b>{{ k|capitalize }}:</b> {{ v }}</div>
+        {% endfor %}
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>3. Examen físico</h2>
+    <div>
+      {% for k,v in json.examen_fisico.items() %}
+        <div><b>{{ k }}:</b> {{ v }}</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="sec">
+    <h2>Base normativa local</h2>
+    <ul>{% for n in base_normativa_local %}<li>{{ n }}</li>{% endfor %}</ul>
+  </div>
+
+  <div class="sec">
+    <h2>Guías internacionales</h2>
+    <ul>{% for g in guias_internacionales %}<li>{{ g }}</li>{% endfor %}</ul>
+  </div>
+</body>
+</html>

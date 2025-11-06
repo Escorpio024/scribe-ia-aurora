@@ -1,0 +1,13 @@
+{
+  "encounter_id":"enc_demo",
+  "patient_id":"pat1",
+  "practitioner_id":"doc1",
+  "schema_id":"consulta_general.yaml",
+  "transcript":[
+    {"t0":0,"t1":2,"speaker":"DOCTOR","text":"Buenos días, ¿qué te trae hoy?","clinical": true},
+    {"t0":2,"t1":6,"speaker":"PACIENTE","text":"Tengo dolor en el pecho desde hace tres días, con tos seca y febrícula.","clinical": true},
+    {"t0":6,"t1":10,"speaker":"DOCTOR","text":"¿Empeora al respirar profundo? ¿disnea, náuseas, sudoración?","clinical": true},
+    {"t0":10,"t1":14,"speaker":"PACIENTE","text":"Sí al respirar profundo duele más. No náuseas ni sudoración.","clinical": true},
+    {"t0":14,"t1":16,"speaker":"DOCTOR","text":"TA 120/80, FC 88, FR 18, Temp 37.6.","clinical": true}
+  ]
+}
