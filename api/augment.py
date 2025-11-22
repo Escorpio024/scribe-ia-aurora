@@ -5,9 +5,9 @@ from __future__ import annotations
 import os, json, re, math, unicodedata
 from typing import List, Dict, Any, Iterable, Tuple, Optional, Set
 
-from api.config import KNOWLEDGE_DIR
+from api.config.settings import settings
 
-PUBMED_DIR   = os.path.join(KNOWLEDGE_DIR, "pubmed")
+PUBMED_DIR   = os.path.join(settings.KNOWLEDGE_DIR, "pubmed")
 PUBMED_JSONL = os.path.join(PUBMED_DIR, "pubmed.jsonl")
 
 # ------------------ utilidades de texto ------------------

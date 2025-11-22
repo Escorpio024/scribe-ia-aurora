@@ -32,3 +32,12 @@ services:
       - hapi.fhir.allow_cascading_deletes=true
     ports:
       - "8081:8080"
+
+  webapp:
+    image: nginx:alpine
+    container_name: scribe_webapp
+    ports:
+      - "9000:80"
+    volumes:
+      - ./web:/usr/share/nginx/html
+    restart: unless-stopped

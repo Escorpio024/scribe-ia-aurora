@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <title>🩺 AURORA | Admisión de Pacientes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Modern Custom CSS -->
+    <link rel="stylesheet" href="css/modern.css">
+
+    <style>
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            border: 3px solid #e5e7eb;
+            background: white;
+            color: #9ca3af;
+            transition: all 0.3s ease;
+        }
+
+        .step-circle.active {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            border-color: #6366f1;
+            color: white;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+        }
+
+        .step-circle.completed {
+            background: #10b981;
+            border-color: #10b981;
+            color: white;
+        }
+
+        .step-line {
+            width: 80px;
+            height: 3px;
+            background: #e5e7eb;
+            margin: 0 1rem;
+        }
+
+        .step-line.completed {
+            background: #10b981;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .doctor-card {
+            border: 2px solid #e5e7eb;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .doctor-card:hover {
+            border-color: #6366f1;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(99, 102, 241, 0.2);
+        }
+
+        .doctor-card.selected {
+            border-color: #6366f1;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(79, 70, 229, 0.1) 100%);
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+
+        .doctor-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            color: white;
+            margin: 0 auto 1rem;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header fade-in">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1>AURORA</h1>
+                    <p>Sistema de Admisión y Atención Clínica Inteligente</p>
+                </div>
+                <button onclick="window.location.href='pending.html'" class="btn btn-secondary">
+                    👨‍⚕️ Portal Médico
+                </button>
+            </div>
+        </header>
+
+        <!-- Step Indicator -->
+        <div class="step-indicator fade-in">
+            <div class="step">
+                <div class="step-circle active" id="step1-circle">1</div>
+                <span class="font-semibold" id="step1-label">Datos del Paciente</span>
+            </div>
+            <div class="step-line" id="line1"></div>
+            <div class="step">
+                <div class="step-circle" id="step2-circle">2</div>
+                <span class="text-gray-400" id="step2-label">Médico y Cita</span>
+            </div>
+        </div>
+
+        <!-- Step 1: Patient Data -->
+        <div id="step1-content" class="card fade-in">
+            <div class="card-header">
+                <h2 class="card-title">📋 Datos del Paciente</h2>
+                <span class="badge badge-info">Paso 1 de 2</span>
+            </div>
+
+            <div class="grid grid-cols-3">
+                <div class="form-group">
+                    <label class="form-label">Nombre Completo *</label>
+                    <input id="patientName" type="text" class="input" placeholder="Ej: María García López" required />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Tipo de Identificación *</label>
+                    <select id="idType" class="select" required>
+                        <option value="">Selecciona...</option>
+                        <option value="CC">Cédula de Ciudadanía (CC)</option>
+                        <option value="TI">Tarjeta de Identidad (TI)</option>
+                        <option value="RC">Registro Civil (RC)</option>
+                        <option value="CE">Cédula de Extranjería (CE)</option>
+                        <option value="PAS">Pasaporte (PAS)</option>
+                        <option value="PPT">Permiso por Protección Temporal (PPT)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Número de Identificación *</label>
+                    <input id="idNumber" type="text" class="input" placeholder="1234567890" required />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Fecha de Nacimiento *</label>
+                    <input id="dob" type="date" class="input" required />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Edad</label>
+                    <input id="age" type="text" class="input" placeholder="Se calcula automáticamente" readonly />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Sexo *</label>
+                    <select id="sex" class="select" required>
+                        <option value="">Selecciona...</option>
+                        <option value="Femenino">Femenino</option>
+                        <option value="Masculino">Masculino</option>
+                        <option value="Otro">Otro/Prefiere no decir</option>
+                    </select>
+                </div>
+
+                <div class="form-group" style="grid-column: span 2;">
+                    <label class="form-label">Dirección</label>
+                    <input id="address" type="text" class="input" placeholder="Calle 123 #45-67" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Teléfono</label>
+                    <input id="phone" type="tel" class="input" placeholder="300 123 4567" />
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">EPS</label>
+                    <select id="eps" class="select">
+                        <option value="">Selecciona...</option>
+                        <option value="SURA">SURA</option>
+                        <option value="Sanitas">Sanitas</option>
+                        <option value="Salud Total">Salud Total</option>
+                        <option value="Compensar">Compensar</option>
+                        <option value="Famisanar">Famisanar</option>
+                        <option value="Nueva EPS">Nueva EPS</option>
+                        <option value="OTRA">Otra...</option>
+                    </select>
+                </div>
+
+                <div class="form-group hidden" id="epsOtherGroup">
+                    <label class="form-label">Especifica EPS</label>
+                    <input id="epsOther" type="text" class="input" placeholder="Nombre de la EPS" />
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 mt-4">
+                <button onclick="nextStep()" class="btn btn-primary">
+                    Continuar →
+                </button>
+            </div>
+        </div>
+
+        <!-- Step 2: Doctor Selection & Appointment -->
+        <div id="step2-content" class="card fade-in hidden">
+            <div class="card-header">
+                <h2 class="card-title">👨‍⚕️ Médico y Cita</h2>
+                <span class="badge badge-info">Paso 2 de 2</span>
+            </div>
+
+            <div class="mb-6 p-4 bg-gray-50 rounded-xl border border-gray-200">
+                <h3 class="font-bold text-gray-800 mb-3">Detalles de la Cita</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Hora de Cita / Llegada *</label>
+                        <input type="datetime-local" id="appointmentTime"
+                            class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                            required>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Motivo de Consulta *</label>
+                        <input type="text" id="consultationReason"
+                            class="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
+                            placeholder="Ej: Dolor de cabeza intenso" required>
+                    </div>
+                </div>
+            </div>
+
+            <p class="text-gray-600 mb-4 font-medium">Selecciona el médico que atenderá al paciente:</p>
+
+            <div class="grid grid-cols-3 gap-4 mb-6">
+                <div class="doctor-card" onclick="selectDoctor('dr_garcia', 'Dr. Carlos García', 'Medicina General')">
+                    <div class="doctor-avatar">👨‍⚕️</div>
+                    <h3 class="font-bold text-center text-lg">Dr. Carlos García</h3>
+                    <p class="text-center text-sm text-gray-600">Medicina General</p>
+                </div>
+
+                <div class="doctor-card" onclick="selectDoctor('dra_martinez', 'Dra. Ana Martínez', 'Pediatría')">
+                    <div class="doctor-avatar">👩‍⚕️</div>
+                    <h3 class="font-bold text-center text-lg">Dra. Ana Martínez</h3>
+                    <p class="text-center text-sm text-gray-600">Pediatría</p>
+                </div>
+
+                <div class="doctor-card"
+                    onclick="selectDoctor('dr_rodriguez', 'Dr. Juan Rodríguez', 'Medicina Interna')">
+                    <div class="doctor-avatar">👨‍⚕️</div>
+                    <h3 class="font-bold text-center text-lg">Dr. Juan Rodríguez</h3>
+                    <p class="text-center text-sm text-gray-600">Medicina Interna</p>
+                </div>
+
+                <div class="doctor-card" onclick="selectDoctor('dra_lopez', 'Dra. María López', 'Cardiología')">
+                    <div class="doctor-avatar">👩‍⚕️</div>
+                    <h3 class="font-bold text-center text-lg">Dra. María López</h3>
+                    <p class="text-center text-sm text-gray-600">Cardiología</p>
+                </div>
+
+                <div class="doctor-card" onclick="selectDoctor('dr_sanchez', 'Dr. Pedro Sánchez', 'Neumología')">
+                    <div class="doctor-avatar">👨‍⚕️</div>
+                    <h3 class="font-bold text-center text-lg">Dr. Pedro Sánchez</h3>
+                    <p class="text-center text-sm text-gray-600">Neumología</p>
+                </div>
+
+                <div class="doctor-card" onclick="selectDoctor('dra_torres', 'Dra. Laura Torres', 'Ginecología')">
+                    <div class="doctor-avatar">👩‍⚕️</div>
+                    <h3 class="font-bold text-center text-lg">Dra. Laura Torres</h3>
+                    <p class="text-center text-sm text-gray-600">Ginecología</p>
+                </div>
+            </div>
+
+            <div class="flex justify-between gap-3 mt-4">
+                <button onclick="previousStep()" class="btn btn-secondary">
+                    ← Atrás
+                </button>
+                <button onclick="addToQueue()" class="btn btn-primary" id="addToQueueBtn" disabled>
+                    Registrar en Cola →
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Queue Manager -->
+    <script src="js/queue-manager.js"></script>
+
+    <script>
+        let currentStep = 1;
+        let selectedDoctor = null;
+        let patientData = {};
+        const queueManager = new QueueManager();
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set default appointment time to now
+            const now = new Date();
+            now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+            document.getElementById('appointmentTime').value = now.toISOString().slice(0, 16);
+        });
+
+        // Auto-calculate age from date of birth
+        document.getElementById('dob').addEventListener('change', function () {
+            const dob = new Date(this.value);
+            const today = new Date();
+            let age = today.getFullYear() - dob.getFullYear();
+            const m = today.getMonth() - dob.getMonth();
+            if (m < 0 || (m === 0 && today.getDate() < dob.getDate())) {
+                age--;
+            }
+            document.getElementById('age').value = age + ' años';
+        });
+
+        // Show/hide other EPS field
+        document.getElementById('eps').addEventListener('change', function () {
+            const epsOtherGroup = document.getElementById('epsOtherGroup');
+            if (this.value === 'OTRA') {
+                epsOtherGroup.classList.remove('hidden');
+            } else {
+                epsOtherGroup.classList.add('hidden');
+            }
+        });
+
+        // Check validity for Step 2 buttons
+        document.getElementById('appointmentTime').addEventListener('input', checkStep2Validity);
+        document.getElementById('consultationReason').addEventListener('input', checkStep2Validity);
+
+        function checkStep2Validity() {
+            const time = document.getElementById('appointmentTime').value;
+            const reason = document.getElementById('consultationReason').value;
+            const btn = document.getElementById('addToQueueBtn');
+
+            if (selectedDoctor && time && reason) {
+                btn.disabled = false;
+            } else {
+                btn.disabled = true;
+            }
+        }
+
+        function validateStep1() {
+            const name = document.getElementById('patientName').value.trim();
+            const idType = document.getElementById('idType').value;
+            const idNumber = document.getElementById('idNumber').value.trim();
+            const dob = document.getElementById('dob').value;
+            const sex = document.getElementById('sex').value;
+
+            if (!name || !idType || !idNumber || !dob || !sex) {
+                alert('Por favor completa todos los campos obligatorios (*)');
+                return false;
+            }
+
+            // Save patient data
+            const epsValue = document.getElementById('eps').value === 'OTRA'
+                ? document.getElementById('epsOther').value.trim()
+                : document.getElementById('eps').value;
+
+            patientData = {
+                nombre: name,
+                identificacion: {
+                    tipo: idType,
+                    numero: idNumber
+                },
+                fecha_nacimiento: dob,
+                edad: document.getElementById('age').value,
+                sexo: sex,
+                direccion: document.getElementById('address').value.trim(),
+                telefono: document.getElementById('phone').value.trim(),
+                eps: epsValue
+            };
+
+            return true;
+        }
+
+        function nextStep() {
+            if (currentStep === 1) {
+                if (!validateStep1()) return;
+
+                // Update UI
+                document.getElementById('step1-content').classList.add('hidden');
+                document.getElementById('step2-content').classList.remove('hidden');
+
+                // Update step indicator
+                document.getElementById('step1-circle').classList.remove('active');
+                document.getElementById('step1-circle').classList.add('completed');
+                document.getElementById('step1-circle').innerHTML = '✓';
+                document.getElementById('line1').classList.add('completed');
+                document.getElementById('step2-circle').classList.add('active');
+                document.getElementById('step2-label').classList.remove('text-gray-400');
+                document.getElementById('step2-label').classList.add('font-semibold');
+
+                currentStep = 2;
+            }
+        }
+
+        function previousStep() {
+            if (currentStep === 2) {
+                // Update UI
+                document.getElementById('step2-content').classList.add('hidden');
+                document.getElementById('step1-content').classList.remove('hidden');
+
+                // Update step indicator
+                document.getElementById('step1-circle').classList.remove('completed');
+                document.getElementById('step1-circle').classList.add('active');
+                document.getElementById('step1-circle').innerHTML = '1';
+                document.getElementById('line1').classList.remove('completed');
+                document.getElementById('step2-circle').classList.remove('active');
+                document.getElementById('step2-label').classList.add('text-gray-400');
+                document.getElementById('step2-label').classList.remove('font-semibold');
+
+                currentStep = 1;
+            }
+        }
+
+        function selectDoctor(doctorId, doctorName, specialty) {
+            // Remove previous selection
+            document.querySelectorAll('.doctor-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+
+            // Add selection to clicked card
+            event.currentTarget.classList.add('selected');
+
+            // Save doctor data
+            selectedDoctor = {
+                id: doctorId,
+                nombre: doctorName,
+                especialidad: specialty
+            };
+
+            checkStep2Validity();
+        }
+
+        function addToQueue() {
+            if (!selectedDoctor) return;
+
+            const appointmentTime = document.getElementById('appointmentTime').value;
+            const reason = document.getElementById('consultationReason').value;
+
+            if (!appointmentTime || !reason) {
+                alert('Por favor completa la hora de cita y el motivo de consulta');
+                return;
+            }
+
+            // Add to Queue
+            queueManager.addPatient(patientData, selectedDoctor, appointmentTime, reason);
+
+            // Show Success Message
+            alert(`✅ Paciente registrado exitosamente en la cola del ${selectedDoctor.nombre}`);
+
+            // Reset form and go to start
+            window.location.reload();
+        }
+    </script>
+</body>
+
+</html>

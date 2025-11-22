@@ -4,7 +4,7 @@ import os, json
 from typing import List, Dict, Any, Optional, Tuple
 import httpx
 
-from api.config import KNOWLEDGE_DIR
+from api.config.settings import settings
 
 NCBI_EUTILS = "https://eutils.ncbi.nlm.nih.gov/entrez/eutils"
 
@@ -24,7 +24,7 @@ async def pubmed_search(q: str, retmax: int = 5, retstart: int = 0) -> Dict[str,
     return {"ids": ids, "count": count, "q": q, "retstart": retstart, "retmax": retmax}
 
 # ---------- Índice local JSONL ----------
-_LOCAL_PATH = os.path.join(KNOWLEDGE_DIR, "pubmed", "pubmed.jsonl")
+_LOCAL_PATH = os.path.join(settings.KNOWLEDGE_DIR, "pubmed", "pubmed.jsonl")
 _LOCAL_IDX: Optional[Dict[str, Dict[str, Any]]] = None  # pmid -> registro
 
 def _normalize_row(raw: Dict[str, Any]) -> Dict[str, Any]:

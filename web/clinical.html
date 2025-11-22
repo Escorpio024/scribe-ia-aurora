@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8" />
+  <title>🩺 Scribe-IA | Asistente Clínico Inteligente</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap"
+    rel="stylesheet">
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Modern Custom CSS -->
+  <link rel="stylesheet" href="css/modern.css">
+
+  <style>
+    .tiny {
+      font-size: .85rem
+    }
+
+    .primary {
+      background: #6366f1;
+      color: #fff
+    }
+
+    .primary:hover {
+      background: #4f46e5
+    }
+
+    .pill {
+      padding: .1rem .4rem;
+      border-radius: .5rem;
+      border: 1px solid #ddd
+    }
+
+    .hc-block {
+      border: 1px solid #e5e7eb;
+      border-radius: .75rem;
+      padding: 12px;
+      background: #fff
+    }
+
+    .hc-block header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px
+    }
+
+    .hc-block .tag {
+      font-size: .7rem;
+      padding: .15rem .4rem;
+      border-radius: .4rem
+    }
+
+    .hc-content {
+      white-space: pre-wrap;
+      min-height: 88px;
+      border: 1px dashed #e5e7eb;
+      border-radius: .5rem;
+      padding: .5rem;
+      background: #fff
+    }
+
+    textarea {
+      outline: none
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header class="header fade-in">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1>AURORA</h1>
+          <p>Asistente Clínico Inteligente con IA | Graba, Transcribe, Genera Historia Clínica</p>
+        </div>
+        <button id="btnFinishConsultation" class="btn"
+          style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: white; font-weight: 700; padding: 1rem 2rem; font-size: 1rem;">
+          ✓ Finalizar Consulta
+        </button>
+      </div>
+    </header>
+
+    <!-- Configuración -->
+    <section class="card fade-in">
+      <div class="card-header">
+        <h2 class="card-title">⚙️ Configuración</h2>
+      </div>
+      <div class="grid grid-cols-3">
+        <div class="form-group">
+          <label class="form-label">API base</label>
+          <input id="apiBase" type="text" value="http://localhost:8080" class="input" />
+          <div class="form-hint">Debe responder <code>/health</code>.</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">HAPI FHIR base</label>
+          <input id="hapiBase" type="text" value="http://localhost:8081/fhir" class="input" />
+          <div class="form-hint">Prueba: <code>/metadata</code>.</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Encounter ID</label>
+          <input id="encounterId" type="text" class="input" />
+          <div class="form-hint">Se autogenera si lo dejas vacío.</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Patient ID</label>
+          <input id="patientId" type="text" value="pat1" class="input" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Practitioner ID</label>
+          <input id="practitionerId" type="text" value="doc1" class="input" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Schema</label>
+          <select id="schemaId" class="select">
+            <option value="auto" selected>auto</option>
+            <option value="consulta_general.yaml">consulta_general.yaml</option>
+            <option value="respiratorio.yaml">respiratorio.yaml</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Datos del paciente -->
+    <section class="bg-white shadow rounded-xl p-6 mb-6 border border-gray-200">
+      <div class="flex items-center justify-between mb-4">
+        <h2 class="text-xl font-semibold text-gray-800">🧾 Datos del paciente</h2>
+        <button id="btnSavePatient" class="px-4 py-2 rounded-lg font-semibold bg-gray-200 hover:bg-gray-300">Guardar en
+          JSON</button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="text-sm text-gray-700">Nombre completo</label>
+          <input id="patientName" type="text" placeholder="Laura Marcela Torres Gómez"
+            class="mt-1 p-3 border rounded-lg w-full" />
+        </div>
+
+        <!-- Tipo de identificación (SELECT) -->
+        <div>
+          <label class="text-sm text-gray-700">Tipo de identificación</label>
+          <select id="idType" class="mt-1 p-3 border rounded-lg w-full bg-white">
+            <option value="" selected disabled>Selecciona…</option>
+            <option value="CC">Cédula de Ciudadanía (CC)</option>
+            <option value="TI">Tarjeta de Identidad (TI)</option>
+            <option value="RC">Registro Civil (RC)</option>
+            <option value="CE">Cédula de Extranjería (CE)</option>
+            <option value="PAS">Pasaporte (PAS)</option>
+            <option value="PPT">Permiso por Protección Temporal (PPT)</option>
+            <option value="NUIP">NUIP</option>
+            <option value="NIT">NIT (personas jurídicas)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="text-sm text-gray-700">Número de identificación</label>
+          <input id="idNumber" type="text" placeholder="1.123.456.789" class="mt-1 p-3 border rounded-lg w-full" />
+        </div>
+
+        <div>
+          <label class="text-sm text-gray-700">Fecha de nacimiento</label>
+          <input id="dob" type="date" class="mt-1 p-3 border rounded-lg w-full" />
+        </div>
+
+        <div>
+          <label class="text-sm text-gray-700">Edad</label>
+          <input id="age" type="text" placeholder="30 años" class="mt-1 p-3 border rounded-lg w-full" />
+        </div>
+
+        <!-- Sexo (SELECT) -->
+        <div>
+          <label class="text-sm text-gray-700">Sexo</label>
+          <select id="sex" class="mt-1 p-3 border rounded-lg w-full bg-white">
+            <option value="" selected disabled>Selecciona…</option>
+            <option value="Femenino">Femenino</option>
+            <option value="Masculino">Masculino</option>
+            <option value="Otro/Prefiere no decir">Otro/Prefiere no decir</option>
+          </select>
+        </div>
+
+        <div class="md:col-span-2">
+          <label class="text-sm text-gray-700">Dirección</label>
+          <input id="address" type="text" placeholder="Carrera 42 # 17-56, Medellín"
+            class="mt-1 p-3 border rounded-lg w-full" />
+        </div>
+
+        <div>
+          <label class="text-sm text-gray-700">Teléfono</label>
+          <input id="phone" type="text" placeholder="300 123 4567" class="mt-1 p-3 border rounded-lg w-full" />
+        </div>
+
+        <!-- EPS (SELECT + “OTRA”) -->
+        <div>
+          <label class="text-sm text-gray-700">EPS</label>
+          <select id="eps" class="mt-1 p-3 border rounded-lg w-full bg-white">
+            <option value="" selected disabled>Selecciona…</option>
+            <!-- Se rellena por JS con la lista de EPS -->
+            <option value="OTRA">OTRA…</option>
+          </select>
+          <input id="epsOther" type="text" placeholder="Especifica EPS"
+            class="mt-2 p-3 border rounded-lg w-full hidden" />
+        </div>
+      </div>
+
+    </section>
+
+    <!-- Grabación -->
+    <section class="bg-white shadow rounded-xl p-6 mb-6 border border-gray-200">
+      <h2 class="text-xl font-semibold text-gray-800 mb-3">🎤 Grabación</h2>
+      <div class="flex flex-wrap gap-3 items-center mb-3">
+        <button id="btnStart"
+          class="px-5 py-2 rounded-lg font-semibold bg-green-500 text-white hover:bg-green-600">Start</button>
+        <button id="btnPause" disabled
+          class="px-5 py-2 rounded-lg font-semibold bg-yellow-500 text-white hover:bg-yellow-600">Pause</button>
+        <button id="btnResume" disabled
+          class="px-5 py-2 rounded-lg font-semibold bg-blue-500 text-white hover:bg-blue-600">Resume</button>
+        <button id="btnStop" disabled
+          class="px-5 py-2 rounded-lg font-semibold bg-red-500 text-white hover:bg-red-600">Stop</button>
+        <span id="recStatus" class="tiny text-gray-600 ml-2"></span>
+      </div>
+      <div class="flex flex-wrap gap-4 items-center">
+        <audio id="audioPreview" controls class="w-full md:w-auto"></audio>
+        <span class="tiny text-gray-500">Se genera WAV 16k mono.</span>
+      </div>
+    </section>
+
+    <!-- Procesamiento -->
+    <section class="bg-white shadow rounded-xl p-6 mb-6 border border-gray-200">
+      <h2 class="text-xl font-semibold text-gray-800 mb-3">⬆️ Procesamiento y Generación</h2>
+      <div class="mb-3">
+        <div class="flex flex-wrap gap-3 items-center mb-2">
+          <button id="btnUpload"
+            class="primary px-6 py-2 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+            disabled>Subir audio a /ingest/upload</button>
+          <span id="ingestMsg" class="tiny text-gray-600"></span>
+        </div>
+      </div>
+
+      <label for="transcriptBox" class="text-sm font-medium text-gray-700 mb-1 block">Transcript (JSON)</label>
+      <textarea id="transcriptBox" class="font-mono p-3 border rounded-lg w-full mb-4" rows="4"
+        placeholder='[]'></textarea>
+
+      <div class="flex flex-wrap gap-3 items-center">
+        <button id="btnGen"
+          class="primary px-6 py-2 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed">Generar
+          Historia (/nlp/generate)</button>
+        <span id="genMsg" class="tiny text-gray-600"></span>
+      </div>
+    </section>
+
+    <!-- JSON y Bundle -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <section class="bg-white shadow rounded-xl p-6 border border-gray-200">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-xl font-semibold text-gray-800">🧠 JSON Clínico</h2>
+          <button id="btnPrintLocal"
+            class="px-4 py-2 rounded-lg font-semibold bg-indigo-600 text-white hover:bg-indigo-700">Imprimir historia
+            (local)</button>
+        </div>
+        <textarea id="jsonClinicoBox" class="font-mono p-3 border rounded-lg w-full h-80" placeholder='{}'></textarea>
+      </section>
+
+      <section class="bg-white shadow rounded-xl p-6 border border-gray-200">
+        <h2 class="text-xl font-semibold text-gray-800 mb-3">📦 Bundle FHIR</h2>
+        <textarea id="bundleBox" class="font-mono p-3 border rounded-lg w-full h-80" placeholder='{}'></textarea>
+        <div class="flex flex-wrap gap-3 items-center mt-4">
+          <button id="btnPushApi" disabled
+            class="primary px-6 py-2 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed">Push vía
+            API (/fhir/push)</button>
+          <button id="btnPushHapi" disabled
+            class="primary px-6 py-2 rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed bg-purple-600 hover:bg-purple-700">Push
+            directo a HAPI</button>
+          <span id="pushMsg" class="tiny text-gray-600"></span>
+        </div>
+      </section>
+    </div>
+
+    <!-- Bloques -->
+    <section class="bg-white shadow rounded-xl p-6 mb-6 border border-gray-200">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold text-gray-800">🗂️ Historia Clínica — Bloques Editables</h2>
+        <button id="btnSaveBlocks"
+          class="px-4 py-2 rounded-lg font-semibold bg-gray-200 hover:bg-gray-300 text-sm">Guardar cambios en
+          JSON</button>
+      </div>
+      <div class="hc-grid grid grid-cols-1 md:grid-cols-2 gap-6" id="hcBlocks"></div>
+    </section>
+
+    <!-- Agente Clínico -->
+    <section class="bg-white shadow rounded-xl p-6 mb-6 border border-gray-200">
+      <h2 class="text-xl font-semibold text-gray-800 mb-3">🤖 Agente Clínico de IA</h2>
+      <div id="agentChatContainer"></div>
+    </section>
+
+    <!-- Sugerencias -->
+    <section class="bg-white shadow rounded-xl p-6 mb-6 border border-gray-200">
+      <h2 class="text-xl font-semibold text-gray-800 mb-3">💡 Sugerencias (CDS)</h2>
+      <div id="cdsPanel"><span class="tiny text-gray-500">Aparecerán aquí después de generar.</span></div>
+    </section>
+
+    <!-- Vista legible -->
+    <section class="bg-white shadow rounded-xl p-6 mb-6 border border-gray-200">
+      <h2 class="text-xl font-semibold text-gray-800 mb-3">🗂️ Historia Clínica (Vista legible)</h2>
+      <pre id="hcView" class="font-mono text-sm bg-gray-50 p-4 rounded-lg border border-gray-200"
+        style="white-space:pre-wrap;">(Historia generada)</pre>
+    </section>
+
+    <!-- Logs -->
+    <section class="bg-white shadow rounded-xl p-6 border border-gray-200">
+      <h2 class="text-xl font-semibold text-gray-800 mb-3">🧭 Logs</h2>
+      <pre id="logs" class="font-mono text-xs bg-gray-800 text-gray-100 p-4 rounded-lg overflow-x-auto h-48"
+        style="white-space:pre-wrap;"></pre>
+    </section>
+  </div>
+
+  <!-- Admission Data Loader -->
+  <script src="js/admission-loader.js"></script>
+  <!-- Finish Consultation Handler -->
+  <script src="js/finish-consultation.js"></script>
+  <!-- Agent Chat Module -->
+  <script src="js/agent-chat.js"></script>
+  <!-- App -->
+  <script src="app.js"></script>
+  <!-- Agent Initialization -->
+  <script src="js/agent-init.js"></script>
+</body>
+
+</html>

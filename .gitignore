@@ -42,3 +42,4 @@ checkpoints/
 Thumbs.db
 .idea/
 .vscode/
+ollama/

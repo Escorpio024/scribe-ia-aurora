@@ -5,7 +5,7 @@ import os
 from typing import List, Dict, Any
 
 from api.models import get_llm
-from api.config import SYSTEM_PROMPT
+from api.config.settings import settings
 import httpx
 LLM_TIMEOUT = float(os.getenv("LLM_TIMEOUT", "90"))
 
@@ -129,7 +129,7 @@ async def generate_structured_json(schema_id: str, transcript: List[Dict[str, An
 
     llm = get_llm()
     messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": settings.SYSTEM_PROMPT},
         {"role": "user", "content": FEW_SHOT_EXAMPLE},
         {"role": "user", "content": OUTPUT_TEMPLATE_HINT},
         {"role": "user", "content": user_prompt},

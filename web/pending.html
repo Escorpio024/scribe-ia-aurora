@@ -1,0 +1,403 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <title>AURORA | Pacientes Pendientes</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Modern Custom CSS -->
+    <link rel="stylesheet" href="css/modern.css">
+
+    <style>
+        .patient-card {
+            border: 2px solid #e5e7eb;
+            border-radius: 1rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            background: white;
+            transition: all 0.3s ease;
+        }
+
+        .patient-card:hover {
+            border-color: #6366f1;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .patient-card.in-progress {
+            border-color: #f59e0b;
+            background: linear-gradient(135deg, #fef3c715 0%, #fbbf2415 100%);
+        }
+
+        .patient-card.completed {
+            border-color: #10b981;
+            background: #f0fdf4;
+            opacity: 0.7;
+        }
+
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .status-pending {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-in-progress {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-completed {
+            background: #d1fae5;
+            color: #065f46;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header fade-in">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1>🩺 Cola de Pacientes</h1>
+                    <p id="doctorInfo">Selecciona tu perfil para ver tus pacientes</p>
+                </div>
+                <button id="btnLogout" class="btn btn-secondary" style="display: none;">
+                    Cerrar Sesión
+                </button>
+            </div>
+        </header>
+
+        <!-- Doctor Selection (shown if not logged in) -->
+        <div id="doctorSelection" class="card fade-in">
+            <div class="card-header">
+                <h2 class="card-title">👨‍⚕️ Selecciona tu Perfil</h2>
+            </div>
+
+            <div class="grid grid-cols-3">
+                <div class="doctor-card" onclick="loginDoctor('dr_garcia', 'Dr. Carlos García', 'Medicina General')">
+                    <div class="doctor-avatar">👨‍⚕️</div>
+                    <h3 class="font-bold text-center text-lg">Dr. Carlos García</h3>
+                    <p class="text-center text-sm text-gray-600">Medicina General</p>
+                </div>
+
+                <div class="doctor-card" onclick="loginDoctor('dra_martinez', 'Dra. Ana Martínez', 'Pediatría')">
+                    <div class="doctor-avatar">👩‍⚕️</div>
+                    <h3 class="font-bold text-center text-lg">Dra. Ana Martínez</h3>
+                    <p class="text-center text-sm text-gray-600">Pediatría</p>
+                </div>
+
+                <div class="doctor-card"
+                    onclick="loginDoctor('dr_rodriguez', 'Dr. Juan Rodríguez', 'Medicina Interna')">
+                    <div class="doctor-avatar">👨‍⚕️</div>
+                    <h3 class="font-bold text-center text-lg">Dr. Juan Rodríguez</h3>
+                    <p class="text-center text-sm text-gray-600">Medicina Interna</p>
+                </div>
+
+                <div class="doctor-card" onclick="loginDoctor('dra_lopez', 'Dra. María López', 'Cardiología')">
+                    <div class="doctor-avatar">👩‍⚕️</div>
+                    <h3 class="font-bold text-center text-lg">Dra. María López</h3>
+                    <p class="text-center text-sm text-gray-600">Cardiología</p>
+                </div>
+
+                <div class="doctor-card" onclick="loginDoctor('dr_sanchez', 'Dr. Pedro Sánchez', 'Neumología')">
+                    <div class="doctor-avatar">👨‍⚕️</div>
+                    <h3 class="font-bold text-center text-lg">Dr. Pedro Sánchez</h3>
+                    <p class="text-center text-sm text-gray-600">Neumología</p>
+                </div>
+
+                <div class="doctor-card" onclick="loginDoctor('dra_torres', 'Dra. Laura Torres', 'Ginecología')">
+                    <div class="doctor-avatar">👩‍⚕️</div>
+                    <h3 class="font-bold text-center text-lg">Dra. Laura Torres</h3>
+                    <p class="text-center text-sm text-gray-600">Ginecología</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Patient Queue (shown after login) -->
+        <div id="patientQueue" class="hidden">
+            <!-- Stats -->
+            <div class="grid grid-cols-3 mb-6 fade-in">
+                <div class="card" style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);">
+                    <div class="text-center">
+                        <div class="text-4xl font-bold text-blue-900" id="statPending">0</div>
+                        <div class="text-sm text-blue-700 mt-1">⏳ Pendientes</div>
+                    </div>
+                </div>
+
+                <div class="card" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);">
+                    <div class="text-center">
+                        <div class="text-4xl font-bold text-yellow-900" id="statInProgress">0</div>
+                        <div class="text-sm text-yellow-700 mt-1">🔄 En Atención</div>
+                    </div>
+                </div>
+
+                <div class="card" style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);">
+                    <div class="text-center">
+                        <div class="text-4xl font-bold text-green-900" id="statCompleted">0</div>
+                        <div class="text-sm text-green-700 mt-1">✅ Atendidos Hoy</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Patients -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <h2 class="card-title">📋 Pacientes Pendientes</h2>
+                    <button onclick="refreshQueue()" class="btn btn-secondary">
+                        🔄 Actualizar
+                    </button>
+                </div>
+
+                <div id="pendingList"></div>
+            </div>
+
+            <!-- Completed Patients -->
+            <div class="card fade-in mt-6">
+                <div class="card-header">
+                    <h2 class="card-title">✅ Atendidos Hoy</h2>
+                    <button onclick="clearCompleted()" class="btn btn-secondary text-sm">
+                        🧹 Limpiar
+                    </button>
+                </div>
+
+                <div id="completedList"></div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="card fade-in mt-6">
+            <div class="flex gap-3">
+                <button onclick="window.location.href='admission.html'" class="btn btn-primary flex-1">
+                    ➕ Nueva Admisión
+                </button>
+                <button onclick="window.location.href='index.html'" class="btn btn-secondary flex-1">
+                    🏠 Inicio
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Queue Manager -->
+    <script src="js/queue-manager.js"></script>
+
+    <script>
+        const queueManager = new QueueManager();
+        const doctorSession = new DoctorSession();
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function () {
+            checkLogin();
+        });
+
+        function checkLogin() {
+            const doctor = doctorSession.getCurrentDoctor();
+
+            if (doctor) {
+                // Doctor is logged in
+                document.getElementById('doctorSelection').classList.add('hidden');
+                document.getElementById('patientQueue').classList.remove('hidden');
+                document.getElementById('btnLogout').style.display = 'block';
+                document.getElementById('doctorInfo').textContent = `${doctor.nombre} - ${doctor.especialidad}`;
+
+                loadQueue();
+            } else {
+                // No doctor logged in
+                document.getElementById('doctorSelection').classList.remove('hidden');
+                document.getElementById('patientQueue').classList.add('hidden');
+                document.getElementById('btnLogout').style.display = 'none';
+            }
+        }
+
+        function loginDoctor(id, nombre, especialidad) {
+            const doctorData = { id, nombre, especialidad };
+            doctorSession.login(doctorData);
+            checkLogin();
+        }
+
+        document.getElementById('btnLogout').addEventListener('click', function () {
+            showLogoutConfirmation();
+        });
+
+        function showLogoutConfirmation() {
+            // Create custom confirmation modal
+            const modal = document.createElement('div');
+            modal.style.cssText = 'position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0, 0, 0, 0.7); display: flex; align-items: center; justify-content: center; z-index: 9999; animation: fadeIn 0.2s ease;';
+
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 1.5rem; padding: 2rem; max-width: 400px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3); animation: slideUp 0.3s ease; text-align: center;">
+                <div style="font-size: 3rem; margin-bottom: 1rem;">👋</div>
+                <h2 style="font-size: 1.5rem; font-weight: 700; color: #111827; margin-bottom: 0.5rem;">
+                    ¿Cerrar Sesión?
+                </h2>
+                <p style="color: #6b7280; margin-bottom: 1.5rem;">
+                    Tendrás que seleccionar tu perfil nuevamente para ver tus pacientes.
+                </p>
+                
+                <div style="display: flex; gap: 1rem;">
+                    <button id="btnCancelLogout" style="flex: 1; padding: 0.75rem 1.5rem; border: 2px solid #e5e7eb; background: white; color: #6b7280; border-radius: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                    Cancelar
+                    </button>
+                    <button id="btnConfirmLogout" style="flex: 1; padding: 0.75rem 1.5rem; border: none; background: #ef4444; color: white; border-radius: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                    Cerrar Sesión
+                    </button>
+                </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            // Add event listeners
+            document.getElementById('btnCancelLogout').addEventListener('click', () => {
+                document.body.removeChild(modal);
+            });
+
+            document.getElementById('btnConfirmLogout').addEventListener('click', () => {
+                document.body.removeChild(modal);
+                doctorSession.logout();
+                checkLogin();
+            });
+
+            // Add animations if not exists
+            if (!document.getElementById('modal-styles')) {
+                const style = document.createElement('style');
+                style.id = 'modal-styles';
+                style.textContent = `
+                @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+                @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+
+        function loadQueue() {
+            const doctor = doctorSession.getCurrentDoctor();
+            if (!doctor) return;
+
+            const stats = queueManager.getDoctorStats(doctor.id);
+            document.getElementById('statPending').textContent = stats.pending;
+            document.getElementById('statInProgress').textContent = stats.inProgress;
+            document.getElementById('statCompleted').textContent = stats.completed;
+
+            // Load pending patients
+            const pending = queueManager.getPatientsByDoctor(doctor.id, 'pending');
+            const pendingList = document.getElementById('pendingList');
+
+            if (pending.length === 0) {
+                pendingList.innerHTML = '<p class="text-gray-500 text-center py-8">No hay pacientes pendientes</p>';
+            } else {
+                pendingList.innerHTML = pending.map(entry => renderPatientCard(entry)).join('');
+            }
+
+            // Load in-progress patients
+            const inProgress = queueManager.getPatientsByDoctor(doctor.id, 'in_progress');
+            if (inProgress.length > 0) {
+                pendingList.innerHTML = inProgress.map(entry => renderPatientCard(entry)).join('') + pendingList.innerHTML;
+            }
+
+            // Load completed patients
+            const completed = queueManager.getPatientsByDoctor(doctor.id, 'completed');
+            const completedList = document.getElementById('completedList');
+
+            if (completed.length === 0) {
+                completedList.innerHTML = '<p class="text-gray-500 text-center py-4">No hay pacientes atendidos hoy</p>';
+            } else {
+                completedList.innerHTML = completed.map(entry => renderPatientCard(entry)).join('');
+            }
+        }
+
+        function renderPatientCard(entry) {
+            const time = new Date(entry.appointmentTime).toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit' });
+            const statusClass = entry.status === 'pending' ? 'status-pending' :
+                entry.status === 'in_progress' ? 'status-in-progress' : 'status-completed';
+            const statusText = entry.status === 'pending' ? '⏳ Pendiente' :
+                entry.status === 'in_progress' ? '🔄 En Atención' : '✅ Atendido';
+            const cardClass = entry.status === 'in_progress' ? 'in-progress' :
+                entry.status === 'completed' ? 'completed' : '';
+
+            return `
+        <div class="patient-card ${cardClass}">
+          <div class="flex items-center justify-between">
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-2">
+                <span class="text-2xl font-bold text-primary">${time}</span>
+                <h3 class="text-lg font-bold text-gray-900">${entry.patient.nombre}</h3>
+                <span class="status-badge ${statusClass}">${statusText}</span>
+              </div>
+              
+              <div class="flex gap-4 text-sm text-gray-600 mb-2">
+                <span>📋 ${entry.patient.identificacion.tipo}: ${entry.patient.identificacion.numero}</span>
+                <span>🎂 ${entry.patient.edad}</span>
+                <span>⚧ ${entry.patient.sexo}</span>
+                ${entry.patient.eps ? `<span>🏥 ${entry.patient.eps}</span>` : ''}
+              </div>
+              
+              ${entry.reason ? `<p class="text-sm text-gray-700"><strong>Motivo:</strong> ${entry.reason}</p>` : ''}
+            </div>
+            
+            <div class="flex flex-col gap-2">
+              ${entry.status === 'pending' || entry.status === 'in_progress' ? `
+                <button onclick="attendPatient('${entry.id}')" class="btn btn-primary">
+                  ${entry.status === 'in_progress' ? '📋 Continuar' : '👨‍⚕️ Atender'}
+                </button>
+              ` : ''}
+              ${entry.status === 'completed' ? `
+                <span class="text-xs text-gray-500">
+                  Finalizado: ${new Date(entry.completedAt).toLocaleTimeString('es-CO')}
+                </span>
+              ` : ''}
+            </div>
+          </div>
+        </div>
+      `;
+        }
+
+        function attendPatient(queueId) {
+            const entry = queueManager.getPatientById(queueId);
+            if (!entry) {
+                alert('Paciente no encontrado');
+                return;
+            }
+
+            // Set as current patient
+            doctorSession.setCurrentPatient(entry);
+
+            // Redirect to clinical interface
+            window.location.href = 'clinical.html';
+        }
+
+        function refreshQueue() {
+            loadQueue();
+            console.log('🔄 Cola actualizada');
+        }
+
+        function clearCompleted() {
+            const doctor = doctorSession.getCurrentDoctor();
+            if (!doctor) return;
+
+            if (confirm('¿Limpiar pacientes atendidos de hoy?')) {
+                queueManager.clearCompleted(doctor.id);
+                loadQueue();
+            }
+        }
+    </script>
+</body>
+
+</html>
